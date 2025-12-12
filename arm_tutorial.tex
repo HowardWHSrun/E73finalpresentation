@@ -9,7 +9,8 @@
 \usepackage{xcolor}
 \usepackage{booktabs}
 
-\setlength{\parskip}{8pt}
+% Removed enumitem to avoid compilation errors
+\setlength{\parskip}{6pt}
 \setlength{\parindent}{0pt}
 
 \hypersetup{
@@ -28,7 +29,7 @@
 \newcommand{\Transition}[1]{\textbf{Transition line:} #1}
 \newcommand{\KeyIdea}[1]{\textbf{Key idea:} #1}
 
-\title{The ARM Advantage\\\large Printable Presenter Tutorial (Detailed \& Expanded)}
+\title{The ARM Advantage\\\large Printable Presenter Tutorial (Detailed)}
 \author{Engineering 73}
 \date{\today}
 
@@ -48,32 +49,35 @@ Use three layers:
 \end{itemize}
 
 \section{Connecting to Class: Physical Electronics Context}
-This presentation isn't just about computer chips; it is a direct application of the \textbf{Physical Electronics} curriculum. Use these connections to ground your talk in what the class has already learned.
+This presentation is a direct application of your \textbf{Physical Electronics} curriculum. Use these connections to ground your talk in what the class has learned.
 
 \subsection*{1. Semiconductor Physics to The MOSFET (Slide 2)}
 \begin{itemize}
     \item \textbf{Class Topic:} Energy Bands and Carrier Transport.
-    \item \textbf{The Physics Detail:} When we apply a positive Gate Voltage ($V_G$) to an NMOS, we push away the majority holes and attract minority electrons to the surface. This bends the energy bands (conduction band $E_C$ moves closer to the Fermi level $E_F$). Once the bands bend enough (at $V_{TH}$), an \textbf{inversion layer} forms. This layer is the ``channel'' that allows current to flow.
-    \item \textbf{Say this:} ``We studied how doping creates carriers. In a MOSFET, the gate field explicitly manipulates those bands to create a conductive channel out of P-type silicon.''
+    \item \textbf{The Physics:} In a p-type substrate, electrons are minority carriers. When we apply a positive Gate Voltage ($V_G$), the electric field pushes away the holes and pulls energy bands down.
+    \item \textbf{Band Bending:} When the bands bend enough, the intrinsic energy level $E_i$ crosses the Fermi level $E_F$. This creates an \textbf{inversion layer} of electrons at the surface. This layer is the conducting "channel."
+    \item \textbf{Say this:} ``We studied how doping creates carriers. In a MOSFET, the gate field bends the energy bands to create an inversion layer, turning an insulator into a conductor.''
 \end{itemize}
 
 \subsection*{2. Quantitative Analysis to Square Law (Slide 3)}
 \begin{itemize}
-    \item \textbf{Class Topic:} Drift Current ($J = q \mu n E$).
-    \item \textbf{The Physics Detail:} Current is Charge $\times$ Velocity. 
-    \begin{itemize}
-        \item The \textbf{Charge density} in the channel depends on the gate voltage: $Q = C_{ox}(V_{GS} - V_{TH})$.
-        \item The \textbf{Velocity} of carriers depends on the electric field (which comes from the drain voltage).
-        \item When you multiply Charge ($V$) $\times$ Velocity ($V$), you get Current $\propto V^2$. This is the origin of the square law.
-    \end{itemize}
-    \item \textbf{Say this:} ``We learned to calculate drift current. The MOSFET square law is just that drift equation integrated across the channel length.''
+    \item \textbf{Class Topic:} Drift Current.
+    \item \textbf{The Equation:} We know that current density is driven by the electric field:
+    \[ J = q \mu n E \]
+    Where $q$ is charge, $\mu$ is mobility, $n$ is carrier concentration, and $E$ is the electric field.
+    \item \textbf{The Link:} To find the total MOSFET current ($I_D$), we integrate this drift equation along the channel. The result is the famous Square Law for saturation:
+    \[ I_D = \frac{1}{2} \mu C_{ox} \frac{W}{L} (V_{GS} - V_{TH})^2 \]
+    \item \textbf{Say this:} ``The Square Law isn't just a formula we memorized; it comes directly from integrating the drift current equation ($J = q \mu n E$) across the channel geometry.''
 \end{itemize}
 
 \subsection*{3. Device Modeling to Dynamic Power (Slide 7)}
 \begin{itemize}
-    \item \textbf{Class Topic:} Capacitance ($C = \epsilon A / d$) and Energy.
-    \item \textbf{The Physics Detail:} A digital 1 is just a capacitor charged to $V_{DD}$. A digital 0 is that capacitor discharged to Ground. The energy stored in a capacitor is $E = \frac{1}{2}CV^2$. Every clock cycle, we charge and discharge millions of these capacitors (gates and wires). Therefore, Power = Energy $\times$ Frequency $\approx CV^2f$.
-    \item \textbf{Say this:} ``Every logic gate input looks like a capacitor to the previous stage. Charging that capacitor takes energy. That is exactly why $V^2$ dominates the power equation.''
+    \item \textbf{Class Topic:} Capacitance and Energy Storage.
+    \item \textbf{The Equation:} A capacitor stores energy in its electric field. The energy required to charge a capacitor $C$ to voltage $V$ is:
+    \[ E_{stored} = \frac{1}{2} C V^2 \]
+    \item \textbf{The Link:} Every digital 1 to 0 transition involves discharging this energy, and every 0 to 1 transition involves charging it again from the power supply.
+    \item \textbf{The Physics of $C_{load}$:} The load capacitance comes from the physical gate structure ($C = \epsilon A / d$) and the wires connecting them.
+    \item \textbf{Say this:} ``Every logic gate input is physically a capacitor ($C = \epsilon A / d$). Charging it takes energy equal to $\frac{1}{2}CV^2$. That is why voltage is squared in the power equation.''
 \end{itemize}
 
 \newpage
@@ -85,126 +89,123 @@ This presentation isn't just about computer chips; it is a direct application of
 \begin{enumerate}
   \item Open \texttt{arm\_presentation.html} in Chrome or Safari.
   \item Use \textbf{Arrow keys} (or Space) to move forward/back.
-  \item Press \textbf{F} for fullscreen. Press \textbf{Esc} to exit.
+  \item Press \textbf{F} for fullscreen.
   \item Press \textbf{S} to open speaker view.
-  \item Have a stable internet connection (MathJax loads from the web).
 \end{enumerate}
 
-\section{Slide-by-slide: Detailed Breakdown}
+\subsection{Timing plan (typical 8--10 minutes)}
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Slide & Suggested time \\
+\midrule
+1 (Title) & 0:15--0:25 \\
+2 (MOSFET) & 0:40--0:60 \\
+3 (Current sets speed) & 0:45--1:05 \\
+4 (CMOS logic) & 0:35--0:55 \\
+5 (CISC versus RISC) & 0:45--1:05 \\
+6 (RISC reduces overhead) & 0:45--1:05 \\
+7 (Dynamic power) & 0:45--1:10 \\
+8 (Pipelining) & 0:45--1:10 \\
+9 (Delay versus voltage) & 0:30--0:50 (optional) \\
+10 (Area and cost) & 0:30--0:50 \\
+11 (SoC) & 0:35--0:55 \\
+12 (Conclusion) & 0:15--0:25 \\
+\bottomrule
+\end{tabular}
+\end{center}
 
-\Slide{1 --- Title: The ARM Advantage}
-\Goal{Set the thesis: Physics $\to$ Architecture $\to$ Efficiency.}
-\Say\\
-Today I\textquotesingle m explaining ARM from the bottom up. We often treat chips as black boxes, but their efficiency comes from specific physical choices. My thesis is that ARM's simpler architecture reduces the number of physical switches needed for "overhead" tasks, which lowers capacitance and enables lower voltage. Since power scales with voltage squared, this creates a massive efficiency advantage.
+\section{Deep Dive: How It All Connects (The Detailed Logic)}
+\label{sec:deepdive}
+This section connects every concept in a single logical chain.
 
-\Slide{2 --- The MOSFET}
-\Goal{Explain the switch.}
-\Say\\
-Every CPU starts with the MOSFET. It is a voltage-controlled switch. Physically, we have a Gate (metal), an Oxide (insulator), and a Semiconductor (silicon). When we apply voltage to the Gate, it creates an electric field that pulls electrons to the surface, creating a conductive "channel" between Source and Drain.
-\IfAsked\\
-\textbf{Detail:} The "Field-Effect" in MOSFET refers to this electric field controlling the conductivity.
+\subsection*{Step 1: The Physics Constraint}
+\textbf{The Reality:} We build computers out of transistors (MOSFETs). A MOSFET is a switch that charges a capacitor (the gate of the next transistor).
+\begin{itemize}
+    \item \textbf{Capacitance ($C$):} The gate is a parallel plate capacitor. Its capacitance is determined by the oxide thickness ($d$) and the area ($A = W \times L$):
+    \[ C_{ox} = \frac{\epsilon_{ox} A}{d} \]
+    \item \textbf{Speed depends on Current ($I$):} To switch a logic state (0 to 1), we must charge this capacitor. The time it takes ($\Delta t$) depends on how much current we can push:
+    \[ I = C \frac{dV}{dt} \implies \Delta t \approx \frac{C \Delta V}{I} \]
+    To switch faster (small $\Delta t$), we need high Current ($I$).
+\end{itemize}
 
-\Slide{3 --- Current sets speed}
-\Goal{Explain $I_D \propto (V_{GS}-V_{TH})^2$.}
-\Say\\
-Speed comes from current. Why? Because the next transistor is a capacitor. To turn it on, we must fill it with charge. High current fills it faster.
-The equation shows we have two knobs to get more current:
-1. \textbf{Geometry ($W/L$)}: Make the transistor wider (like a wider highway).
-2. \textbf{Overdrive ($V_{GS}-V_{TH}$)}: Push the gas pedal harder (higher voltage).
-Both have a cost: Width takes space, Voltage takes power.
+\subsection*{Step 2: The Efficiency Conflict}
+To get that high current ($I$), the Square Law tells us we need:
+\begin{enumerate}
+    \item \textbf{Wider Transistors ($W$):} This increases $I$, but it also increases Area ($A$) and therefore Capacitance ($C$). It is a diminishing return.
+    \item \textbf{Higher Voltage ($V_{GS}$):} This increases $I$ quadratically, which is great for speed. \textbf{But...}
+\end{enumerate}
+Power depends on voltage squared ($V^2$). So pushing voltage for speed kills your efficiency.
 
-\Slide{4 --- CMOS logic}
-\Goal{Explain Logic Gates.}
-\Say\\
-We don't compute with single transistors; we use pairs. CMOS stands for Complementary MOS. We use NMOS to pull signals down to 0, and PMOS to pull them up to 1. A single NAND gate (which can build any logic) takes 4 transistors. A CPU is just billions of these arranged specifically.
+\subsection*{Step 3: The Architectural Solution (RISC)}
+\textbf{The Problem:} x86 (CISC) instructions are complex. Interpreting them requires a large, complex decoder circuit.
+\begin{itemize}
+    \item \textbf{More Transistors:} A complex decoder needs thousands more logic gates.
+    \item \textbf{Higher $C_{load}$:} Every extra gate adds capacitance that must be charged and discharged on every clock cycle.
+\end{itemize}
+\textbf{The ARM Solution:} Use simple, fixed-length instructions (RISC). The decoder is tiny.
+\begin{itemize}
+    \item \textbf{Lower $C_{load}$:} Fewer transistors switching means less total capacitance to charge.
+\end{itemize}
 
-\Slide{5 --- CISC versus RISC}
-\Goal{The Architectural Divergence.}
-\Say\\
-Here is where Physics meets Architecture.
-\textbf{CISC (x86)} uses complex, variable-length instructions. A single instruction might look like "Load data, add 5, store it back". The hardware to decode this is massive.
-\textbf{RISC (ARM)} uses simple, fixed instructions. "Load". "Add". "Store". The hardware is simple.
-Physically, "Complexity" means more transistors, more wires, and more switching.
-
-\Slide{6 --- RISC reduces overhead}
-\Goal{Explain $C_{load}$.}
-\Say\\
-Why does complexity matter? Because every extra transistor adds \textbf{Capacitance ($C_{load}$)}.
-In x86, the "Decoder" (the part that figures out what to do) is huge because it has to figure out where one instruction ends and the next begins.
-In ARM, instructions are fixed size (e.g., always 32 bits). The decoder is tiny.
-Less hardware = Less Capacitance = Less Energy per cycle.
-
-\Slide{7 --- Dynamic Power}
-\Goal{The Master Equation: $P \approx CV^2f$.}
-\Say\\
-This is the most important slide. Dynamic Power is:
-1. \textbf{Capacitance ($C$)}: Reduced by ARM's simpler logic.
-2. \textbf{Frequency ($f$)}: How fast we clock it.
-3. \textbf{Voltage ($V^2$)}: This is the killer term. Because it is squared, a small drop in voltage gives a huge drop in power.
-Because ARM chips have lower $C$, they run cooler, which allows engineers to lower $V$ even further without crashing the chip.
-
-\Slide{8 --- Pipelining}
-\Goal{Speed via Structure.}
-\Say\\
-If we lower power, how do we stay fast? We use a Pipeline—an assembly line for instructions (Fetch, Decode, Execute).
-ARM's simple instructions make this easy. Every stage takes roughly the same amount of time.
-x86's complex instructions make this hard (some take 1 cycle, some take 100).
-Smooth flow allows ARM to get high performance (Throughput) without brute-forcing the frequency.
-
-\Slide{9 --- Delay versus Voltage}
-\Goal{The Trade-off.}
-\Say\\
-There is no free lunch. If we lower Voltage ($V_{DD}$) to save power, the physics of the MOSFET says the current ($I_D$) drops. Less current means slower switching (Delay increases).
-ARM accepts this trade-off. They might run at 3 GHz instead of 5 GHz, but they use 1/3rd the power. For a phone, that is the winning strategy.
-
-\Slide{10 --- Area and Cost}
-\Goal{Economic Reality.}
-\Say\\
-Simpler cores are physically smaller. Silicon real estate is expensive.
-Because ARM cores are tiny, we can fit more of them (8 cores, 16 cores) on a chip, OR we can fit other things...
-
-\Slide{11 --- System-on-Chip (SoC)}
-\Goal{Integration.}
-\Say\\
-This leads to the System-on-Chip. Because the CPU is small and efficient, we can paste the GPU, the NPU (AI), and the Memory Controller right next to it on the same piece of silicon.
-\textbf{Physics check:} Short wires have less capacitance. Moving data inside an SoC takes way less energy than moving it across a motherboard.
-
-\Slide{12 --- Conclusion}
-\Say\\
-To summarize:
-1. \textbf{Physics:} Voltage squared dominates power.
-2. \textbf{Architecture:} RISC reduces the physical transistor count ($C_{load}$) for overhead tasks.
-3. \textbf{Result:} This allows lower voltage operation, leading to massive efficiency gains and tighter integration.
-ARM isn't just code; it's a strategy for organizing silicon atoms.
+\subsection*{Step 4: The Efficiency Multiplier}
+Because ARM chips have lower $C_{load}$ (less overhead), they waste less power. This allows designers to lower the Voltage ($V_{DD}$) significantly.
+\begin{itemize}
+    \item The Dynamic Power Equation:
+    \[ P_{dynamic} = \alpha \cdot C_{load} \cdot V_{DD}^2 \cdot f \]
+\end{itemize}
+This is where the magic happens. By reducing $C_{load}$ (Architecture), we enable lower $V_{DD}$ (Physics). Since $V$ is squared, a small drop in voltage creates a massive drop in power consumption.
 
 \newpage
 
-\section{Deep Dive: The Logical Chain (Detailed)}
-Use this section if you get stuck or need to answer a hard question.
+\section{Slide-by-slide Script}
 
-\subsection*{The "Why" Chain}
-\begin{enumerate}
-    \item \textbf{Why does x86 have high capacitance?}
-    \begin{itemize}
-        \item x86 instructions are variable length (1 byte to 15 bytes).
-        \item The CPU doesn't know where the next instruction starts until it decodes the current one.
-        \item This requires a "Brute Force" decoder that looks at many bytes at once to find boundaries.
-        \item That huge block of logic has thousands of transistors switching every cycle. Switching = Charging Capacitors = Energy.
-    \end{itemize}
+\Slide{1 --- Title: The ARM Advantage}
+\Say\\
+Today I\textquotesingle m explaining ARM from the bottom up: how the physics of transistors sets constraints, and how ARM\textquotesingle s RISC design is one way to organize silicon to win on performance per watt.
 
-    \item \textbf{Why does ARM allow lower Voltage?}
-    \begin{itemize}
-        \item Power generates heat. If a chip gets too hot, silicon degrades or errors occur.
-        \item Since ARM has lower Capacitance ($C$), it generates less heat at a given Voltage.
-        \item This gives engineers "thermal headroom" to tune the voltage. They can choose to lower $V$ to save massive battery life (since $P \propto V^2$).
-    \end{itemize}
+\Slide{2 --- The MOSFET}
+\Say\\
+Every CPU starts with the MOSFET. It is a voltage-controlled switch. Physically, when we apply a gate voltage, we bend the energy bands of the semiconductor to create an inversion layer---a conductive channel between source and drain.
 
-    \item \textbf{Why is $V^2$ so powerful?}
-    \begin{itemize}
-        \item If you drop voltage by 20\% (e.g., 1.0V to 0.8V)...
-        \item Power becomes $0.8 \times 0.8 = 0.64$.
-        \item You save 36\% of the power for just a 20\% drop in voltage.
-    \end{itemize}
-\end{enumerate}
+\Slide{3 --- Current sets speed}
+\Say\\
+Speed comes from current. We know from class that drift current is $J = q \mu n E$. When we integrate that across the device, we get the Square Law. This tells us that to go faster, we either need bigger transistors (geometry) or more voltage (overdrive).
+
+\Slide{4 --- CMOS logic}
+\Say\\
+We build logic using CMOS: PMOS pulls up, NMOS pulls down. A single NAND gate takes 4 transistors. A CPU is just billions of these gates arranged to do math.
+
+\Slide{5 --- CISC versus RISC}
+\Say\\
+CISC (x86) uses complex, variable-length instructions. RISC (ARM) uses simple, uniform instructions. Physically, complex instructions require more hardware to decode, which means more transistors switching.
+
+\Slide{6 --- RISC reduces overhead}
+\Say\\
+This brings us to $C_{load}$. $C_{load}$ is the total capacitance we have to charge. By simplifying the decoder, ARM reduces the number of transistors that switch, which lowers $C_{load}$.
+
+\Slide{7 --- Dynamic Power}
+\Say\\
+This is the most important equation: $P = C V^2 f$. This comes from the energy of a capacitor: $E = \frac{1}{2}CV^2$. Because ARM lowers $C$, it can often run at lower $V$. Since $V$ is squared, this results in massive power savings.
+
+\Slide{8 --- Pipelining}
+\Say\\
+To keep speed high without burning power, ARM uses pipelining. Simple instructions allow for a smooth assembly line, keeping the Cycles Per Instruction (CPI) close to 1.
+
+\Slide{9 --- Delay versus Voltage}
+\Say\\
+There is a trade-off. Lower voltage reduces the drive current, which slows down the charging of the gate capacitance. ARM finds the "sweet spot" where efficiency is maximized even if peak frequency is slightly lower.
+
+\Slide{10 --- Area and Cost}
+\Say\\
+Simpler cores use less silicon area. Since cost scales with area squared, simpler cores are much cheaper.
+
+\Slide{11 --- System-on-Chip}
+\Say\\
+Because the cores are small, we can fit the CPU, GPU, and NPU on one chip. This integration shortens the wires between components. Shorter wires mean less capacitance ($C = \epsilon A / d$), saving even more power.
+
+\Slide{12 --- Conclusion}
+\Say\\
+Physics dictates that Power scales with Voltage squared. Architecture allows ARM to minimize capacitance ($C_{load}$). The result is a highly efficient chip that powers the mobile world.
 
 \end{document}
