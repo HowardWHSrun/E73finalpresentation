@@ -48,6 +48,38 @@ Use three layers:
   \item \textbf{Deeper notes (if asked):} extra detail for Q\&A or if you need to explain something differently.
 \end{itemize}
 
+\section{Connecting to Class: Physical Electronics Context}
+This presentation isn't just about computer chips; it's a direct application of the \textbf{Physical Electronics} curriculum. Use these connections to ground your talk in what the class has already learned.
+
+\subsection*{1. Semiconductor Physics $\to$ The MOSFET (Slide 2)}
+\begin{itemize}
+    \item \textbf{Class Topic:} Energy Bands \& Carrier Transport.
+    \item \textbf{The Link:} When we apply a Gate Voltage ($V_G$), we are bending the energy bands at the oxide-semiconductor interface. This creates an inversion layer (the ``channel'') where minority carriers (electrons in a p-type substrate) can conduct current.
+    \item \textbf{Say this:} ``We studied how doping creates carriers. In a MOSFET, the gate field explicitly manipulates those carriers to turn an insulator into a conductor.''
+\end{itemize}
+
+\subsection*{2. Quantitative Analysis $\to$ Square Law (Slide 3)}
+\begin{itemize}
+    \item \textbf{Class Topic:} Drift Current ($J = q \mu n E$).
+    \item \textbf{The Link:} The ``Square Law'' ($I_D \propto (V_{GS}-V_{TH})^2$) is derived directly from integrating the drift current equation across the channel length.
+    \item \textbf{Say this:} ``We learned to calculate drift current. The MOSFET square law is just that drift equation applied to the channel geometry ($W/L$) we design.''
+\end{itemize}
+
+\subsection*{3. Device Modeling $\to$ Dynamic Power (Slide 7)}
+\begin{itemize}
+    \item \textbf{Class Topic:} Capacitance ($C = \epsilon A / d$) and Charging.
+    \item \textbf{The Link:} Every time a transistor switches, it must charge the gate capacitance ($C_{ox}$) of the \textit{next} transistor. This is the physical origin of $C_{load}$ in the power equation.
+    \item \textbf{Say this:} ``Every logic gate input looks like a capacitor to the previous stage. The energy to charge that capacitor is $\frac{1}{2}CV^2$. That is exactly why $V^2$ dominates the power equation.''
+\end{itemize}
+
+\subsection*{4. Moving Beyond the ``Black Box''}
+\begin{itemize}
+    \item \textbf{Class Goal:} Understand \textit{why} devices behave the way they do.
+    \item \textbf{The Link:} ARM's efficiency isn't magic; it's a result of optimizing these physical parameters. By simplifying the architecture (RISC), they reduce the number of physical devices that need to switch, effectively lowering the total capacitance ($C_{load}$) the system must charge.
+\end{itemize}
+
+\newpage
+
 \section{Presentation setup (HTML deck)}
 \textbf{Your slide file:} \texttt{arm\_presentation.html}
 
