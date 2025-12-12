@@ -1,0 +1,173 @@
+\documentclass[aspectratio=169]{beamer}
+
+\usetheme{Madrid}
+\usecolortheme{beaver}
+
+\title{Physical Electronics \& Architecture: The ARM Approach}
+\subtitle{From Silicon Atoms to System-on-Chip}
+\author{Engineering 73}
+\date{\today}
+
+\begin{document}
+
+\begin{frame}
+    \titlepage
+\end{frame}
+
+\section{The Physics Foundation (Bottom-Up)}
+
+\begin{frame}{The Fundamental Unit: The MOSFET}
+    \textbf{Concept:} Every processor starts with the Metal-Oxide-Semiconductor Field-Effect Transistor (MOSFET). It is a voltage-controlled switch.
+    
+    \vspace{0.5cm}
+    
+    \textbf{The Physics:}
+    \begin{itemize}
+        \item \textbf{Gate:} The control knob.
+        \item \textbf{Channel:} The path for electrons (Source $\to$ Drain).
+        \item \textbf{Mechanism:} Applying voltage to the Gate creates an electric field, allowing current to flow.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{The Governing Equation (Current)}
+    \textbf{Concept:} The current ($I_D$) flowing through the transistor determines how fast it switches.
+    
+    \begin{equation*}
+        I_D \approx \frac{1}{2} \mu C_{ox} \frac{W}{L} (V_{GS} - V_{TH})^2
+    \end{equation*}
+    
+    \begin{itemize}
+        \item $\frac{W}{L}$ (Geometry): The physical width and length of the transistor.
+        \item $V_{GS} - V_{TH}$ (Overdrive Voltage): The "gas pedal."
+    \end{itemize}
+    
+    \vspace{0.5cm}
+    \textbf{Key Takeaway:} To make chips faster, we usually increase $W/L$ (size) or $V_{GS}$ (voltage). But this costs power and space.
+\end{frame}
+
+\begin{frame}{From Physics to Logic (CMOS)}
+    \textbf{Concept:} We don't use single transistors; we use Complementary MOS (CMOS) to build Logic Gates.
+    
+    \vspace{0.5cm}
+    
+    \textbf{The Setup:}
+    \begin{itemize}
+        \item \textbf{NMOS:} Pulls voltage down (Logic 0).
+        \item \textbf{PMOS:} Pulls voltage up (Logic 1).
+    \end{itemize}
+    
+    \vspace{0.5cm}
+    \textbf{The Link:} A NAND gate (universal logic) requires 4 transistors. A CPU is just billions of these arranged specifically.
+\end{frame}
+
+\section{The Architectural Bridge}
+
+\begin{frame}{The Challenge: Complexity vs. Efficiency}
+    \textbf{The Question:} We have the physics (MOSFETs). How do we arrange them?
+    
+    \vspace{0.5cm}
+    
+    \textbf{Two Schools of Thought:}
+    \begin{itemize}
+        \item \textbf{CISC (x86):} Complex hardware to do heavy lifting. Large physical footprint.
+        \item \textbf{RISC (ARM):} Simple hardware. Shift complexity to software. Small physical footprint.
+    \end{itemize}
+    
+    \vspace{0.5cm}
+    \textbf{Thesis:} ARM is a blueprint for Physical Minimalism.
+\end{frame}
+
+\begin{frame}{The Physical Consequence of RISC}
+    \textbf{Concept:} ARM uses Simple, Fixed-Length Instructions.
+    
+    \vspace{0.5cm}
+    
+    \textbf{Physical Impact:}
+    \begin{itemize}
+        \item \textbf{Decoding:} x86 requires massive, power-hungry circuits just to figure out what an instruction is.
+        \item \textbf{ARM:} The decoder is tiny and simple because the instructions are uniform.
+    \end{itemize}
+    
+    \vspace{0.5cm}
+    \textbf{Result:} Fewer transistors needed for "overhead" logic $\to$ Lower Capacitive Load ($C_{load}$).
+\end{frame}
+
+\section{The Governing Equations of Efficiency}
+
+\begin{frame}{The Master Equation (Dynamic Power)}
+    \textbf{Concept:} Why does ARM battery life last longer? It's in the math.
+    
+    \begin{equation*}
+        P_{dynamic} \approx C_{load} \cdot V_{DD}^2 \cdot f
+    \end{equation*}
+    
+    \textbf{The Breakdown:}
+    \begin{itemize}
+        \item $C_{load}$: Reduced by ARM's simple RISC logic (fewer transistors switching).
+        \item $V_{DD}$ (Voltage): The most critical term (squared!). ARM designs are optimized to run at lower voltages.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Speed via Structure (Pipelining)}
+    \textbf{Concept:} If individual transistors are running at low power, how do we get speed? Pipelining.
+    
+    \begin{equation*}
+        \text{Execution Time} = \text{CPI} \cdot \text{Clock Cycle} \cdot \text{Instruction Count}
+    \end{equation*}
+    
+    \textbf{The ARM Strategy:}
+    \begin{itemize}
+        \item \textbf{CPI (Cycles Per Instruction):} Because instructions are simple, ARM achieves a CPI $\approx 1$.
+        \item \textbf{Pipeline:} Uniform instructions allow for a smooth, jam-free assembly line (Fetch $\to$ Decode $\to$ Execute).
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Physical Gate Delay (The Speed Limit)}
+    \textbf{Concept:} What stops us from going faster? The physics of the transistor again.
+    
+    \begin{equation*}
+        \tau_{pd} \propto \frac{C_{out} \cdot V_{DD}}{(V_{DD} - V_t)^\alpha}
+    \end{equation*}
+    
+    \textbf{The Trade-off:} ARM accepts a slightly higher delay ($\tau_{pd}$)—meaning lower peak frequency ($f$)—in exchange for a massive drop in Voltage ($V_{DD}$), optimizing the Power-Per-Watt ratio.
+\end{frame}
+
+\section{The Result (Silicon Reality)}
+
+\begin{frame}{Area \& Cost (The Economic Equation)}
+    \textbf{Concept:} Smaller cores cost less and allow for more integration.
+    
+    \begin{equation*}
+        \text{Cost} \propto \text{Die Area}^2
+    \end{equation*}
+    
+    \textbf{Impact:} Because ARM cores are physically small, we can fit 8 Cores + GPU + Neural Engine on one small piece of silicon.
+\end{frame}
+
+\begin{frame}{System-on-Chip (SoC)}
+    \textbf{Concept:} The ARM Core is just one part of the physical electronics.
+    
+    \vspace{0.5cm}
+    
+    \textbf{The Map:}
+    \begin{itemize}
+        \item Core (ALU/Registers) connects to:
+        \item Memory Controller
+        \item Physical I/O
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Conclusion}
+    \textbf{Summary:}
+    \begin{itemize}
+        \item \textbf{Physics:} Transistors follow the Square Law.
+        \item \textbf{Architecture:} ARM's RISC design minimizes the transistor count ($C_{load}$).
+        \item \textbf{Result:} Lower Power ($P \propto V^2$), Smaller Area, and High Efficiency.
+    \end{itemize}
+    
+    \vspace{1cm}
+    \centering
+    \textit{ARM isn't just code; it's a specific strategy for organizing silicon atoms.}
+\end{frame}
+
+\end{document}
