@@ -1,0 +1,1131 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Physical Electronics &amp; Architecture: The ARM Approach</title>
+    <meta
+      name="description"
+      content="From MOSFET physics to ARM RISC efficiency equations and System-on-Chip integration."
+    />
+
+    <!-- Reveal.js slideshow UI (CDN). -->
+    <link rel="stylesheet" href="https://unpkg.com/reveal.js@5/dist/reveal.css" />
+
+    <!-- MathJax (CDN) for LaTeX equations. -->
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [["\\(", "\\)"]],
+          displayMath: [["\\[", "\\]"]],
+          processEscapes: true,
+        },
+        options: {
+          skipHtmlTags: ["script", "noscript", "style", "textarea", "pre", "code"],
+        },
+      };
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
+    <style>
+      :root {
+        --bg: #f7f9fc;
+        --panel: #ffffff;
+        --text: #0b1220;
+        --muted: #475569;
+
+        /* ARM-ish palette */
+        --accent: #e11d48; /* rose */
+        --accent2: #2563eb; /* blue */
+        --warn: #d97706;
+        --purple: #7c3aed;
+
+        --border: rgba(15, 23, 42, 0.14);
+        --shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        margin: 0;
+        background: radial-gradient(1100px 800px at 18% 0%, rgba(225, 29, 72, 0.11), transparent 60%),
+          radial-gradient(900px 700px at 82% 0%, rgba(37, 99, 235, 0.10), transparent 55%),
+          radial-gradient(900px 700px at 50% 100%, rgba(124, 58, 237, 0.08), transparent 60%), var(--bg);
+        color: var(--text);
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji",
+          "Segoe UI Emoji";
+      }
+
+      /* Make Reveal (if loaded) match our palette */
+      .reveal {
+        color: var(--text);
+      }
+      .reveal .slides section {
+        text-align: left;
+      }
+      .reveal h1,
+      .reveal h2,
+      .reveal h3 {
+        color: var(--text);
+        letter-spacing: -0.02em;
+      }
+      .reveal h2 {
+        font-size: 42px;
+        margin-bottom: 10px;
+      }
+      .reveal p,
+      .reveal li {
+        color: var(--text);
+      }
+      .reveal a {
+        color: var(--accent2);
+      }
+      .reveal .slide-number {
+        color: var(--muted);
+      }
+
+      /* Offline-friendly fallback mode (no Reveal.js): show one slide at a time */
+      body.fallback .reveal {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      body.fallback .slides > section {
+        display: none;
+        min-height: 100vh;
+        box-sizing: border-box;
+        padding: 64px 72px;
+      }
+      body.fallback .slides > section.active {
+        display: block;
+      }
+
+      .topline {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 18px;
+        color: var(--muted);
+        font-size: 18px;
+      }
+      .kbd {
+        border: 1px solid var(--border);
+        background: rgba(37, 99, 235, 0.08);
+        padding: 6px 10px;
+        border-radius: 10px;
+        color: var(--text);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        font-size: 14px;
+        white-space: nowrap;
+      }
+
+      .title {
+        font-size: 56px;
+        line-height: 1.05;
+        margin: 10px 0 12px;
+      }
+      .subtitle {
+        font-size: 22px;
+        color: var(--muted);
+        line-height: 1.4;
+        max-width: 70ch;
+      }
+
+      .pillrow {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+      .pill {
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 999px;
+        padding: 8px 12px;
+        font-size: 16px;
+        color: var(--muted);
+      }
+      .pill b {
+        color: var(--text);
+        font-weight: 700;
+      }
+
+      .two-col {
+        display: grid;
+        grid-template-columns: 1.08fr 0.92fr;
+        gap: 22px;
+        align-items: start;
+        margin-top: 18px;
+      }
+      .two-col > * {
+        min-width: 0;
+      }
+
+      .panel {
+        border: 1px solid var(--border);
+        background: var(--panel);
+        border-radius: 16px;
+        padding: 18px 18px;
+        box-shadow: var(--shadow);
+        min-width: 0;
+      }
+      .panel h3 {
+        margin: 0 0 10px;
+        font-size: 22px;
+      }
+      .panel p,
+      .panel li {
+        font-size: 18px;
+        line-height: 1.45;
+      }
+      .panel ul {
+        margin: 10px 0 0 18px;
+      }
+
+      .callout {
+        border-left: 4px solid var(--accent);
+        padding: 12px 14px;
+        background: rgba(225, 29, 72, 0.08);
+        border-radius: 10px;
+        color: var(--text);
+        font-size: 18px;
+        line-height: 1.45;
+      }
+      .callout b {
+        color: var(--text);
+      }
+
+      .mini {
+        color: var(--muted);
+        font-size: 16px;
+        line-height: 1.4;
+      }
+      .nowrap {
+        white-space: nowrap;
+      }
+      .impact {
+        font-weight: 800;
+      }
+      .impact.up {
+        color: #be123c;
+      }
+      .impact.down {
+        color: #047857;
+      }
+      .impact .arrow {
+        font-weight: 900;
+        margin-left: 6px;
+      }
+
+      .cards {
+        display: grid;
+        gap: 14px;
+      }
+      .cards.cols-4 {
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      }
+      .cards.cols-3 {
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      }
+      .cards.cols-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .card {
+        border: 1px solid var(--border);
+        background: var(--panel);
+        border-radius: 16px;
+        padding: 14px 14px;
+        box-shadow: var(--shadow);
+        min-width: 0;
+      }
+      .card.compact {
+        box-shadow: none;
+        background: rgba(15, 23, 42, 0.02);
+      }
+      .cardTitle {
+        font-weight: 800;
+        letter-spacing: -0.01em;
+        margin: 0 0 8px;
+        font-size: 18px;
+        overflow-wrap: anywhere;
+      }
+      .cardSub {
+        margin: 8px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+      }
+
+      /* Simple block-diagram “chip” visuals */
+      .chip {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 14px;
+        border-radius: 18px;
+        border: 1px solid var(--border);
+        background: rgba(15, 23, 42, 0.03);
+      }
+      .chip .row {
+        display: grid;
+        gap: 10px;
+      }
+      .chip .row.cols-4 {
+        grid-template-columns: repeat(4, 1fr);
+      }
+      .chip .row.cols-3 {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      .chip .row.cols-5 {
+        grid-template-columns: repeat(5, 1fr);
+      }
+      .blk {
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.88);
+        border-radius: 14px;
+        padding: 10px 10px;
+        font-size: 15px;
+        color: var(--muted);
+        line-height: 1.25;
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
+      .blk b {
+        color: var(--text);
+      }
+      .blk.accent {
+        background: rgba(225, 29, 72, 0.10);
+        border-color: rgba(225, 29, 72, 0.28);
+      }
+      .blk.accent2 {
+        background: rgba(37, 99, 235, 0.10);
+        border-color: rgba(37, 99, 235, 0.30);
+      }
+      .blk.warn {
+        background: rgba(217, 119, 6, 0.12);
+        border-color: rgba(217, 119, 6, 0.32);
+      }
+
+      table.compare {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        overflow: hidden;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        background: var(--panel);
+        font-size: 16px;
+        box-shadow: var(--shadow);
+      }
+      table.compare th,
+      table.compare td {
+        padding: 12px 12px;
+        border-bottom: 1px solid var(--border);
+        vertical-align: top;
+      }
+      table.compare th {
+        text-align: left;
+        font-size: 15px;
+        color: var(--muted);
+        background: rgba(15, 23, 42, 0.03);
+      }
+      table.compare td {
+        color: var(--text);
+        line-height: 1.35;
+      }
+      table.compare tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .pipeline {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+        margin-top: 10px;
+      }
+      .step {
+        border: 1px solid var(--border);
+        background: var(--panel);
+        border-radius: 16px;
+        padding: 14px 14px;
+        box-shadow: var(--shadow);
+        min-height: 92px;
+        min-width: 0;
+      }
+      .stepTop {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .stepNum {
+        width: 28px;
+        height: 28px;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        color: var(--text);
+        background: rgba(225, 29, 72, 0.10);
+        border: 1px solid rgba(225, 29, 72, 0.25);
+        flex: 0 0 auto;
+      }
+      .stepTitle {
+        font-weight: 800;
+        letter-spacing: -0.01em;
+        font-size: 16px;
+        overflow-wrap: anywhere;
+      }
+      .stepDesc {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+      }
+
+      .eq {
+        font-size: 22px;
+        line-height: 1.2;
+        margin: 10px 0 0;
+      }
+
+      .foot {
+        margin-top: 14px;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.35;
+      }
+
+      /* Print: make each section a page */
+      @media print {
+        body {
+          background: #ffffff;
+          color: #000000;
+        }
+        .reveal,
+        .reveal .slides section,
+        body.fallback .slides > section {
+          color: #000000 !important;
+        }
+        body.fallback .slides > section {
+          display: block !important;
+          page-break-after: always;
+          min-height: auto;
+          padding: 48px 48px;
+        }
+        .panel,
+        .chip,
+        table.compare {
+          border: 1px solid #cccccc !important;
+          background: #ffffff !important;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="reveal">
+      <div class="slides">
+        <!-- Slide 1: Title -->
+        <section>
+          <div class="topline">
+            <div>Engineering 73 — Final Presentation</div>
+            <div class="kbd">← / → to navigate</div>
+          </div>
+          <h1 class="title">The ARM Advantage</h1>
+          <div class="subtitle">
+            Physical Electronics &amp; Architecture — from <b>MOSFET</b> physics to <b>RISC</b> efficiency and modern
+            <b>SoC</b> design.
+          </div>
+
+          <div class="pipeline" style="margin-top: 18px">
+            <div class="step">
+              <div class="stepTop">
+                <div class="stepNum">1</div>
+                <div class="stepTitle">MOSFET</div>
+              </div>
+              <div class="stepDesc">electric-field switch</div>
+            </div>
+            <div class="step">
+              <div class="stepTop">
+                <div class="stepNum">2</div>
+                <div class="stepTitle">CMOS Logic</div>
+              </div>
+              <div class="stepDesc">gates → billions</div>
+            </div>
+            <div class="step">
+              <div class="stepTop">
+                <div class="stepNum">3</div>
+                <div class="stepTitle">RISC (ARM)</div>
+              </div>
+              <div class="stepDesc">less decode overhead</div>
+            </div>
+            <div class="step">
+              <div class="stepTop">
+                <div class="stepNum">4</div>
+                <div class="stepTitle">SoC</div>
+              </div>
+              <div class="stepDesc">integration + perf/W</div>
+            </div>
+          </div>
+
+          <div class="callout" style="margin-top: 16px">
+            <b>Thesis:</b> simpler instructions → fewer switching transistors → lower <b>\(C_{load}\)</b> → lower
+            <b>\(P \propto V^2\)</b>.
+          </div>
+        </section>
+
+        <!-- Slide 2: MOSFET -->
+        <section>
+          <h2>The MOSFET</h2>
+          <div class="two-col">
+            <div class="panel">
+              <div class="callout"><b>MOSFET</b> = voltage-controlled switch</div>
+              <ul style="margin-top: 12px">
+                <li><b>Gate</b>: control voltage</li>
+                <li><b>Channel</b>: Source → Drain path</li>
+                <li><b>Field</b>: gate voltage creates (or removes) the channel</li>
+              </ul>
+              <div class="mini" style="margin-top: 10px">Gate voltage → channel → current.</div>
+            </div>
+            <div class="panel">
+              <h3>OFF vs ON</h3>
+              <div class="cards cols-2" style="margin-top: 10px">
+                <div class="card compact">
+                  <div class="cardTitle">OFF</div>
+                  <svg viewBox="0 0 220 170" width="100%" height="auto" role="img" aria-label="MOSFET OFF diagram">
+                    <rect x="16" y="120" width="188" height="36" rx="10" fill="rgba(15,23,42,0.04)" stroke="rgba(15,23,42,0.14)" />
+                    <rect x="24" y="128" width="52" height="20" rx="8" fill="rgba(37,99,235,0.14)" stroke="rgba(15,23,42,0.14)" />
+                    <rect x="144" y="128" width="52" height="20" rx="8" fill="rgba(37,99,235,0.14)" stroke="rgba(15,23,42,0.14)" />
+                    <rect x="86" y="24" width="48" height="30" rx="10" fill="rgba(225,29,72,0.16)" stroke="rgba(15,23,42,0.14)" />
+                    <rect x="82" y="58" width="56" height="8" rx="4" fill="rgba(15,23,42,0.10)" />
+                    <line x1="76" y1="118" x2="144" y2="118" stroke="rgba(15,23,42,0.25)" stroke-dasharray="5 5" />
+                    <text x="50" y="142" text-anchor="middle" font-size="12" fill="rgba(15,23,42,0.72)">Source</text>
+                    <text x="170" y="142" text-anchor="middle" font-size="12" fill="rgba(15,23,42,0.72)">Drain</text>
+                    <text x="110" y="44" text-anchor="middle" font-size="12" fill="rgba(15,23,42,0.80)">Gate</text>
+                    <text x="110" y="112" text-anchor="middle" font-size="12" fill="rgba(15,23,42,0.62)">No channel</text>
+                  </svg>
+                </div>
+                <div class="card compact">
+                  <div class="cardTitle">ON</div>
+                  <svg viewBox="0 0 220 170" width="100%" height="auto" role="img" aria-label="MOSFET ON diagram">
+                    <rect x="16" y="120" width="188" height="36" rx="10" fill="rgba(15,23,42,0.04)" stroke="rgba(15,23,42,0.14)" />
+                    <rect x="24" y="128" width="52" height="20" rx="8" fill="rgba(37,99,235,0.14)" stroke="rgba(15,23,42,0.14)" />
+                    <rect x="144" y="128" width="52" height="20" rx="8" fill="rgba(37,99,235,0.14)" stroke="rgba(15,23,42,0.14)" />
+                    <rect x="86" y="24" width="48" height="30" rx="10" fill="rgba(225,29,72,0.16)" stroke="rgba(15,23,42,0.14)" />
+                    <rect x="82" y="58" width="56" height="8" rx="4" fill="rgba(15,23,42,0.10)" />
+                    <line x1="76" y1="118" x2="144" y2="118" stroke="rgba(5,150,105,0.8)" stroke-width="4" stroke-linecap="round" />
+                    <line x1="110" y1="54" x2="110" y2="110" stroke="rgba(225,29,72,0.40)" stroke-width="2" stroke-dasharray="3 4" />
+                    <text x="50" y="142" text-anchor="middle" font-size="12" fill="rgba(15,23,42,0.72)">Source</text>
+                    <text x="170" y="142" text-anchor="middle" font-size="12" fill="rgba(15,23,42,0.72)">Drain</text>
+                    <text x="110" y="44" text-anchor="middle" font-size="12" fill="rgba(15,23,42,0.80)">Gate</text>
+                    <text x="110" y="112" text-anchor="middle" font-size="12" fill="rgba(15,23,42,0.62)">Channel forms</text>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Slide 3: Square law current -->
+        <section>
+          <h2>Current Sets Speed</h2>
+          <div class="two-col">
+            <div class="panel">
+              <h3>Square law (speed knob)</h3>
+              <div class="eq">\[ I_D \propto \frac{W}{L}\,(V_{GS} - V_{TH})^2 \]</div>
+              <div class="cards cols-2" style="margin-top: 10px">
+                <div class="card compact">
+                  <div class="cardTitle">Geometry</div>
+                  <div class="cardSub">\(W/L\) ↑ → \(I_D\) ↑ (area ↑)</div>
+                </div>
+                <div class="card compact">
+                  <div class="cardTitle">Overdrive</div>
+                  <div class="cardSub">\(V_{GS}-V_{TH}\) ↑ → \(I_D\) ↑ (voltage ↑)</div>
+                </div>
+              </div>
+              <div class="mini" style="margin-top: 10px">(\(\mu C_{ox}\) are material/process constants.)</div>
+            </div>
+            <div class="panel">
+              <h3>Speed costs</h3>
+              <div class="cards cols-2" style="margin-top: 10px">
+                <div class="card">
+                  <div class="cardTitle">Bigger \(W/L\)</div>
+                  <div class="cardSub">Area ↑ • Capacitance ↑</div>
+                </div>
+                <div class="card">
+                  <div class="cardTitle">Higher \(V\)</div>
+                  <div class="cardSub">Energy ↑ ( \(V^2\) )</div>
+                </div>
+              </div>
+              <div class="callout" style="margin-top: 14px">
+                Next: \(P_{dynamic} \approx C\,V^2\,f\).
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Slide 4: CMOS -->
+        <section>
+          <h2>CMOS Logic</h2>
+          <div class="two-col">
+            <div class="panel">
+              <h3>CMOS gates</h3>
+              <ul>
+                <li><b>PMOS</b>: pulls up → 1</li>
+                <li><b>NMOS</b>: pulls down → 0</li>
+                <li><b>NAND</b>: 4 transistors (universal)</li>
+              </ul>
+              <div class="mini" style="margin-top: 10px">Billions of gates → a CPU.</div>
+            </div>
+            <div class="panel">
+              <h3>Visual: CMOS NAND (conceptual)</h3>
+              <svg viewBox="0 0 520 280" width="100%" height="auto" role="img" aria-label="CMOS NAND diagram">
+                <!-- rails -->
+                <line x1="60" y1="40" x2="460" y2="40" stroke="rgba(15,23,42,0.35)" stroke-width="3" />
+                <line x1="60" y1="240" x2="460" y2="240" stroke="rgba(15,23,42,0.35)" stroke-width="3" />
+                <text x="48" y="44" font-size="12" fill="rgba(15,23,42,0.70)">VDD</text>
+                <text x="48" y="244" font-size="12" fill="rgba(15,23,42,0.70)">GND</text>
+
+                <!-- output node -->
+                <circle cx="260" cy="140" r="6" fill="rgba(37,99,235,0.70)" />
+                <text x="272" y="145" font-size="12" fill="rgba(15,23,42,0.80)">OUT</text>
+
+                <!-- PMOS parallel (top) -->
+                <rect x="140" y="62" width="90" height="44" rx="12" fill="rgba(225,29,72,0.12)" stroke="rgba(15,23,42,0.14)" />
+                <rect x="290" y="62" width="90" height="44" rx="12" fill="rgba(225,29,72,0.12)" stroke="rgba(15,23,42,0.14)" />
+                <text x="185" y="90" text-anchor="middle" font-size="12" fill="rgba(15,23,42,0.78)">PMOS</text>
+                <text x="335" y="90" text-anchor="middle" font-size="12" fill="rgba(15,23,42,0.78)">PMOS</text>
+
+                <!-- NMOS series (bottom) -->
+                <rect x="215" y="158" width="90" height="36" rx="12" fill="rgba(37,99,235,0.10)" stroke="rgba(15,23,42,0.14)" />
+                <rect x="215" y="202" width="90" height="36" rx="12" fill="rgba(37,99,235,0.10)" stroke="rgba(15,23,42,0.14)" />
+                <text x="260" y="181" text-anchor="middle" font-size="12" fill="rgba(15,23,42,0.78)">NMOS</text>
+                <text x="260" y="225" text-anchor="middle" font-size="12" fill="rgba(15,23,42,0.78)">NMOS</text>
+
+                <!-- connections -->
+                <line x1="185" y1="62" x2="185" y2="40" stroke="rgba(15,23,42,0.25)" stroke-width="2" />
+                <line x1="335" y1="62" x2="335" y2="40" stroke="rgba(15,23,42,0.25)" stroke-width="2" />
+
+                <line x1="185" y1="106" x2="260" y2="140" stroke="rgba(15,23,42,0.22)" stroke-width="2" />
+                <line x1="335" y1="106" x2="260" y2="140" stroke="rgba(15,23,42,0.22)" stroke-width="2" />
+
+                <line x1="260" y1="140" x2="260" y2="158" stroke="rgba(15,23,42,0.22)" stroke-width="2" />
+                <line x1="260" y1="194" x2="260" y2="202" stroke="rgba(15,23,42,0.22)" stroke-width="2" />
+                <line x1="260" y1="238" x2="260" y2="240" stroke="rgba(15,23,42,0.22)" stroke-width="2" />
+
+                <!-- gate labels -->
+                <text x="140" y="58" font-size="12" fill="rgba(15,23,42,0.70)">A</text>
+                <text x="380" y="58" font-size="12" fill="rgba(15,23,42,0.70)">B</text>
+                <text x="210" y="184" font-size="12" fill="rgba(15,23,42,0.70)">A</text>
+                <text x="210" y="228" font-size="12" fill="rgba(15,23,42,0.70)">B</text>
+
+                <!-- captions -->
+                <text x="260" y="265" text-anchor="middle" font-size="12" fill="rgba(15,23,42,0.62)">
+                  PMOS in parallel (pull-up) • NMOS in series (pull-down)
+                </text>
+              </svg>
+            </div>
+          </div>
+        </section>
+
+        <!-- Slide 5: CISC vs RISC -->
+        <section>
+          <h2>CISC vs RISC</h2>
+          <div class="two-col">
+            <div class="panel">
+              <h3>Two schools</h3>
+              <div class="cards cols-2" style="margin-top: 10px">
+                <div class="card">
+                  <div class="cardTitle">CISC (x86)</div>
+                  <ul>
+                    <li>Variable-length</li>
+                    <li>Heavy decode/control</li>
+                    <li>Overhead area + power</li>
+                  </ul>
+                </div>
+                <div class="card">
+                  <div class="cardTitle">RISC (ARM)</div>
+                  <ul>
+                    <li>Fixed-length</li>
+                    <li>Light decode/control</li>
+                    <li>Better perf/W</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="callout" style="margin-top: 14px"><b>ARM</b> = physical minimalism.</div>
+            </div>
+            <div class="panel">
+              <h3>Visual: decode overhead</h3>
+              <svg viewBox="0 0 520 260" width="100%" height="auto" role="img" aria-label="Decode overhead comparison">
+                <rect x="0" y="0" width="520" height="260" rx="14" fill="rgba(15,23,42,0.01)"></rect>
+
+                <!-- x86 row -->
+                <text x="22" y="38" font-size="14" fill="rgba(15,23,42,0.78)">x86</text>
+                <rect x="20" y="48" width="480" height="72" rx="16" fill="rgba(255,255,255,0.75)" stroke="rgba(15,23,42,0.14)"></rect>
+                <rect x="36" y="68" width="280" height="32" rx="12" fill="rgba(225,29,72,0.16)" stroke="rgba(15,23,42,0.14)"></rect>
+                <rect x="328" y="68" width="156" height="32" rx="12" fill="rgba(37,99,235,0.12)" stroke="rgba(15,23,42,0.14)"></rect>
+                <text x="176" y="89" text-anchor="middle" font-size="12" fill="rgba(15,23,42,0.82)">Decode/Control</text>
+                <text x="406" y="89" text-anchor="middle" font-size="12" fill="rgba(15,23,42,0.82)">Execute</text>
+
+                <!-- ARM row -->
+                <text x="22" y="152" font-size="14" fill="rgba(15,23,42,0.78)">ARM</text>
+                <rect x="20" y="162" width="480" height="72" rx="16" fill="rgba(255,255,255,0.75)" stroke="rgba(15,23,42,0.14)"></rect>
+                <rect x="36" y="182" width="130" height="32" rx="12" fill="rgba(225,29,72,0.16)" stroke="rgba(15,23,42,0.14)"></rect>
+                <rect x="174" y="182" width="310" height="32" rx="12" fill="rgba(37,99,235,0.12)" stroke="rgba(15,23,42,0.14)"></rect>
+                <text x="101" y="203" text-anchor="middle" font-size="12" fill="rgba(15,23,42,0.82)">Decode</text>
+                <text x="329" y="203" text-anchor="middle" font-size="12" fill="rgba(15,23,42,0.82)">Execute</text>
+
+                <!-- legend -->
+                <rect x="20" y="238" width="12" height="12" rx="3" fill="rgba(225,29,72,0.25)"></rect>
+                <text x="38" y="248" font-size="12" fill="rgba(15,23,42,0.68)">overhead</text>
+                <rect x="108" y="238" width="12" height="12" rx="3" fill="rgba(37,99,235,0.20)"></rect>
+                <text x="126" y="248" font-size="12" fill="rgba(15,23,42,0.68)">compute</text>
+              </svg>
+              <div class="mini" style="margin-top: 10px">Less overhead switching → \(C_{load}\) ↓</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Slide 6: Physical consequence -->
+        <section>
+          <h2>RISC reduces overhead</h2>
+          <div class="two-col">
+            <div class="panel">
+              <h3>Fixed-length instructions</h3>
+              <ul>
+                <li><b>x86</b>: variable length → decode overhead</li>
+                <li><b>ARM</b>: fixed length → simple decode</li>
+              </ul>
+              <div class="callout" style="margin-top: 14px">
+                Overhead ↓ → \(C_{load}\) ↓
+              </div>
+            </div>
+            <div class="panel">
+              <h3>Decoder complexity (conceptual)</h3>
+              <div class="cards cols-2" style="margin-top: 10px">
+                <div class="card">
+                  <div class="cardTitle">x86: heavy decode</div>
+                  <div class="chip" aria-label="x86 decode diagram">
+                    <div class="row cols-3">
+                      <div class="blk warn"><b>Predecode</b></div>
+                      <div class="blk warn"><b>Microcode</b></div>
+                      <div class="blk warn"><b>OOO control</b></div>
+                    </div>
+                    <div class="row">
+                      <div class="blk">
+                        <span class="impact up nowrap">\(C_{load}\) <span class="arrow">↑</span></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="card">
+                  <div class="cardTitle">ARM: lightweight decode</div>
+                  <div class="chip" aria-label="ARM decode diagram">
+                    <div class="row cols-3">
+                      <div class="blk accent"><b>Fixed decode</b></div>
+                      <div class="blk accent2"><b>Regular control</b></div>
+                      <div class="blk accent2"><b>Pipeline flow</b></div>
+                    </div>
+                    <div class="row">
+                      <div class="blk">
+                        <span class="impact down nowrap">\(C_{load}\) <span class="arrow">↓</span></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Slide 7: Dynamic power -->
+        <section>
+          <h2>Dynamic Power</h2>
+          <div class="two-col">
+            <div class="panel">
+              <h3>Dynamic power</h3>
+              <div class="eq">\[ P_{dynamic} \approx C_{load}\,V_{DD}^2\,f \]</div>
+              <div class="cards cols-3" style="margin-top: 10px; grid-template-columns: repeat(3, minmax(0, 1fr));">
+                <div class="card compact">
+                  <div class="cardTitle">\(C_{load}\)</div>
+                  <div class="cardSub">transistors + wires</div>
+                </div>
+                <div class="card compact">
+                  <div class="cardTitle">\(V_{DD}^2\)</div>
+                  <div class="cardSub">biggest lever</div>
+                </div>
+                <div class="card compact">
+                  <div class="cardTitle">\(f\)</div>
+                  <div class="cardSub">linear</div>
+                </div>
+              </div>
+              <div class="callout" style="margin-top: 14px">
+                Voltage dominates: \(0.8^2 = 0.64\).
+              </div>
+            </div>
+            <div class="panel">
+              <h3>ARM levers</h3>
+              <div class="cards cols-2" style="margin-top: 10px">
+                <div class="card">
+                  <div class="cardTitle">\(C_{load}\) ↓</div>
+                  <div class="cardSub">simpler decode</div>
+                </div>
+                <div class="card">
+                  <div class="cardTitle">\(V_{DD}\) ↓</div>
+                  <div class="cardSub">lower voltage</div>
+                </div>
+                <div class="card">
+                  <div class="cardTitle">Pipeline</div>
+                  <div class="cardSub">steady CPI</div>
+                </div>
+                <div class="card">
+                  <div class="cardTitle">Perf/W</div>
+                  <div class="cardSub">moderate \(f\)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Slide 8: Pipelining -->
+        <section>
+          <h2>Pipelining</h2>
+          <div class="two-col">
+            <div class="panel">
+              <h3>Execution time</h3>
+              <div class="eq">\[ \text{Execution Time} = \text{CPI}\cdot \text{Clock Cycle}\cdot \text{Instruction Count} \]</div>
+              <div class="cards cols-3" style="margin-top: 10px; grid-template-columns: repeat(3, minmax(0, 1fr));">
+                <div class="card compact">
+                  <div class="cardTitle">CPI</div>
+                  <div class="cardSub">aim ≈ 1</div>
+                </div>
+                <div class="card compact">
+                  <div class="cardTitle">Clock</div>
+                  <div class="cardSub">short cycle</div>
+                </div>
+                <div class="card compact">
+                  <div class="cardTitle">IC</div>
+                  <div class="cardSub">compiler helps</div>
+                </div>
+              </div>
+              <div class="mini" style="margin-top: 10px">Uniform decode → smooth pipeline.</div>
+            </div>
+            <div class="panel">
+              <h3>Pipeline: smooth flow</h3>
+              <div class="pipeline" aria-label="Pipeline stages">
+                <div class="step">
+                  <div class="stepTop">
+                    <div class="stepNum">1</div>
+                    <div class="stepTitle">Fetch</div>
+                  </div>
+                  <div class="stepDesc">instruction</div>
+                </div>
+                <div class="step">
+                  <div class="stepTop">
+                    <div class="stepNum">2</div>
+                    <div class="stepTitle">Decode</div>
+                  </div>
+                  <div class="stepDesc">control</div>
+                </div>
+                <div class="step">
+                  <div class="stepTop">
+                    <div class="stepNum">3</div>
+                    <div class="stepTitle">Execute</div>
+                  </div>
+                  <div class="stepDesc">ALU</div>
+                </div>
+                <div class="step">
+                  <div class="stepTop">
+                    <div class="stepNum">4</div>
+                    <div class="stepTitle">Memory</div>
+                  </div>
+                  <div class="stepDesc">load/store</div>
+                </div>
+                <div class="step">
+                  <div class="stepTop">
+                    <div class="stepNum">5</div>
+                    <div class="stepTitle">Writeback</div>
+                  </div>
+                  <div class="stepDesc">commit</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Slide 9: Gate delay -->
+        <section>
+          <h2>Delay vs Voltage</h2>
+          <div class="two-col">
+            <div class="panel">
+              <h3>Delay vs voltage</h3>
+              <div class="cards cols-2" style="margin-top: 10px">
+                <div class="card compact">
+                  <div class="cardTitle">Lower \(V_{DD}\)</div>
+                  <div class="cardSub">power ↓</div>
+                </div>
+                <div class="card compact">
+                  <div class="cardTitle">But</div>
+                  <div class="cardSub">delay ↑</div>
+                </div>
+              </div>
+              <div class="callout" style="margin-top: 14px">
+                Choose the perf/W sweet spot.
+              </div>
+            </div>
+            <div class="panel">
+              <h3>Trade-off picture (normalized)</h3>
+              <svg viewBox="0 0 520 300" width="100%" height="auto" role="img" aria-label="Power vs delay tradeoff chart">
+                <rect x="0" y="0" width="520" height="300" rx="14" fill="rgba(15,23,42,0.01)"></rect>
+                <rect x="58" y="28" width="430" height="230" rx="12" fill="rgba(255,255,255,0.75)" stroke="rgba(15,23,42,0.14)"></rect>
+
+                <!-- axes -->
+                <line x1="86" y1="240" x2="468" y2="240" stroke="rgba(15,23,42,0.22)" />
+                <line x1="86" y1="56" x2="86" y2="240" stroke="rgba(15,23,42,0.22)" />
+                <text x="468" y="268" text-anchor="end" font-size="13" fill="rgba(15,23,42,0.70)">VDD</text>
+                <text x="86" y="52" font-size="13" fill="rgba(15,23,42,0.70)">Normalized</text>
+
+                <!-- power curve ~ V^2 -->
+                <path
+                  d="M86 220 C 170 200, 260 160, 330 120 C 400 84, 440 70, 468 62"
+                  fill="none"
+                  stroke="rgba(225,29,72,0.85)"
+                  stroke-width="4"
+                  stroke-linecap="round"
+                ></path>
+                <text x="460" y="76" text-anchor="end" font-size="12" fill="rgba(225,29,72,0.85)">Power ~ V²</text>
+
+                <!-- delay curve increases at low V -->
+                <path
+                  d="M86 70 C 140 90, 200 120, 250 150 C 300 175, 360 200, 468 232"
+                  fill="none"
+                  stroke="rgba(37,99,235,0.80)"
+                  stroke-width="4"
+                  stroke-linecap="round"
+                ></path>
+                <text x="460" y="216" text-anchor="end" font-size="12" fill="rgba(37,99,235,0.80)">Delay ↑ as VDD ↓</text>
+
+                <!-- marker for "ARM point" -->
+                <circle cx="250" cy="150" r="7" fill="rgba(15,23,42,0.10)" stroke="rgba(15,23,42,0.30)" />
+                <circle cx="250" cy="150" r="5" fill="rgba(5,150,105,0.85)" />
+                <text x="264" y="155" font-size="12" fill="rgba(15,23,42,0.78)">Perf/W sweet spot</text>
+              </svg>
+            </div>
+          </div>
+        </section>
+
+        <!-- Slide 10: Area & cost -->
+        <section>
+          <h2>Area &amp; Cost</h2>
+          <div class="two-col">
+            <div class="panel">
+              <h3>Cost scales with area</h3>
+              <div class="callout" style="margin-top: 14px">
+                Area ↓ → cost ↓ → more integration.
+              </div>
+            </div>
+            <div class="panel">
+              <h3>Integration (conceptual)</h3>
+              <div class="chip" aria-label="SoC integration diagram">
+                <div class="row cols-4">
+                  <div class="blk accent2"><b>CPU</b><br />Core</div>
+                  <div class="blk accent2"><b>CPU</b><br />Core</div>
+                  <div class="blk accent2"><b>CPU</b><br />Core</div>
+                  <div class="blk accent2"><b>CPU</b><br />Core</div>
+                </div>
+                <div class="row cols-4">
+                  <div class="blk"><b>GPU</b></div>
+                  <div class="blk accent"><b>NPU</b></div>
+                  <div class="blk warn"><b>Memory</b></div>
+                  <div class="blk"><b>I/O</b></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Slide 11: SoC -->
+        <section>
+          <h2>System-on-Chip</h2>
+          <div class="two-col">
+            <div class="panel">
+              <h3>What’s on an SoC</h3>
+              <div class="cards cols-3" style="margin-top: 10px; grid-template-columns: repeat(3, minmax(0, 1fr));">
+                <div class="card compact">
+                  <div class="cardTitle">Compute</div>
+                  <div class="cardSub">CPU • GPU • NPU</div>
+                </div>
+                <div class="card compact">
+                  <div class="cardTitle">Memory</div>
+                  <div class="cardSub">SRAM • DRAM ctrl</div>
+                </div>
+                <div class="card compact">
+                  <div class="cardTitle">I/O</div>
+                  <div class="cardSub">PHY + links</div>
+                </div>
+              </div>
+              <div class="callout" style="margin-top: 14px">Short wires → \(C\) ↓ → energy ↓</div>
+            </div>
+            <div class="panel">
+              <h3>Map (conceptual)</h3>
+              <div class="chip" aria-label="SoC block map">
+                <div class="row cols-3">
+                  <div class="blk accent2"><b>CPU</b></div>
+                  <div class="blk"><b>GPU</b></div>
+                  <div class="blk accent"><b>NPU</b></div>
+                </div>
+                <div class="row cols-3">
+                  <div class="blk"><b>NoC</b></div>
+                  <div class="blk warn"><b>Memory</b></div>
+                  <div class="blk"><b>SRAM</b></div>
+                </div>
+                <div class="row cols-3">
+                  <div class="blk"><b>ISP</b></div>
+                  <div class="blk"><b>Display</b></div>
+                  <div class="blk"><b>I/O</b></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Slide 12: Conclusion -->
+        <section>
+          <h2>Conclusion</h2>
+          <div class="panel">
+            <div class="cards cols-3" aria-label="Conclusion summary cards">
+              <div class="card">
+                <div class="cardTitle">Physics</div>
+                <div class="cardSub">Square law + voltage limits.</div>
+              </div>
+              <div class="card">
+                <div class="cardTitle">Architecture</div>
+                <div class="cardSub">RISC cuts \(C_{load}\).</div>
+              </div>
+              <div class="card">
+                <div class="cardTitle">Result</div>
+                <div class="cardSub">Lower \(P \propto V^2\), smaller die.</div>
+              </div>
+            </div>
+            <div class="callout" style="margin-top: 16px">
+              Final thought: <b>ARM isn’t just code</b> — it’s a strategy for organizing silicon.
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- Reveal.js (CDN). -->
+    <script src="https://unpkg.com/reveal.js@5/dist/reveal.js"></script>
+    <script src="https://unpkg.com/reveal.js@5/plugin/notes/notes.js"></script>
+
+    <script>
+      (function () {
+        function typesetMath() {
+          if (window.MathJax && typeof MathJax.typesetPromise === "function") {
+            MathJax.typesetPromise().catch(function () {
+              /* ignore */
+            });
+          }
+        }
+
+        function initReveal() {
+          if (typeof Reveal === "undefined") return false;
+          try {
+            const plugins = [];
+            if (typeof RevealNotes !== "undefined") plugins.push(RevealNotes);
+
+            const initResult = Reveal.initialize({
+              hash: true,
+              slideNumber: true,
+              transition: "fade",
+              controls: true,
+              progress: true,
+              plugins,
+            });
+
+            // Reveal v5 returns a promise; v4 may not.
+            if (initResult && typeof initResult.then === "function") {
+              initResult.then(typesetMath);
+            } else {
+              typesetMath();
+            }
+
+            Reveal.on("slidechanged", typesetMath);
+            return true;
+          } catch (e) {
+            return false;
+          }
+        }
+
+        function initFallback() {
+          document.body.classList.add("fallback");
+          const slides = Array.from(document.querySelectorAll(".slides > section"));
+          if (!slides.length) return;
+
+          function clamp(n, lo, hi) {
+            return Math.max(lo, Math.min(hi, n));
+          }
+
+          function parseIndexFromHash() {
+            const m = (window.location.hash || "").match(/slide-(\d+)/);
+            if (!m) return 0;
+            const n = parseInt(m[1], 10);
+            return Number.isFinite(n) ? clamp(n, 0, slides.length - 1) : 0;
+          }
+
+          let idx = parseIndexFromHash();
+
+          function show(i) {
+            idx = clamp(i, 0, slides.length - 1);
+            slides.forEach((s, j) => s.classList.toggle("active", j === idx));
+            window.location.hash = "slide-" + idx;
+            typesetMath();
+          }
+
+          function next() {
+            show(idx + 1);
+          }
+
+          function prev() {
+            show(idx - 1);
+          }
+
+          window.addEventListener("hashchange", function () {
+            show(parseIndexFromHash());
+          });
+
+          window.addEventListener("keydown", function (e) {
+            const key = e.key;
+            if (key === "ArrowRight" || key === "PageDown" || key === " ") next();
+            if (key === "ArrowLeft" || key === "PageUp") prev();
+            if (key === "Home") show(0);
+            if (key === "End") show(slides.length - 1);
+          });
+
+          show(idx);
+        }
+
+        // Prefer Reveal (nice UI). If it fails, fallback still works.
+        const revealOK = initReveal();
+        if (!revealOK) initFallback();
+
+        // Ensure MathJax runs even if it loads after init.
+        window.addEventListener("load", typesetMath);
+      })();
+    </script>
+  </body>
+</html>
+
